@@ -8,10 +8,13 @@ import {
   useSubscription,
   createHttpLink,
   gql,
+  split
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import { Client, fetchExchange, subscriptionExchange } from '@urql/core';
-import { createFetchMultipartSubscription } from '@apollo/client/utilities/subscriptions/urql';
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
+import { createClient } from 'graphql-ws';
+import { getMainDefinition } from '@apollo/client/utilities';
+
 
 // GraphQL Endpoint URL
 const uri = 'https://clicklav.com.br/api/v1/graphql';
@@ -33,8 +36,23 @@ const authLink = setContext((_, { headers }) => {
   }
 });
 
+const wsLink = new GraphQLWsLink(
+  createClient({
+    url: 'ws://clicklav.com.br/api/v1/graphql',
+  }),
+);
+
+const splitLink = split(
+  ({ query }) => {
+    const definition = getMainDefinition(query);
+    return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
+  },
+  wsLink,
+  authLink.concat(httpLink),
+);
+
 const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: splitLink,
   cache: new InMemoryCache()
 });
 
