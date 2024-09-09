@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ApolloClient,
   InMemoryCache,
@@ -132,7 +132,7 @@ const App = () => {
   const [sendMessage] = useMutation(SEND_MESSAGE_USER);
 
   // Subscriptions
-  const { data: subscriptionData } = useSubscription(
+  useSubscription(
     CHAT_SUBSCRIPTION,
     {
       variables: { chatRoomId },
@@ -144,14 +144,14 @@ const App = () => {
     }
   );
 
-  const { data: countdownData } = useSubscription(COUNTDOWN_SUBSCRIPTION, {
+  useSubscription(COUNTDOWN_SUBSCRIPTION, {
     shouldResubscribe: true,
     onData({ data }) {
       console.log(data)
     }
   });
 
-  const handleSendMessage = async (user="client") => {
+  const handleSendMessage = async (user = "client") => {
     // set userToken
     localStorage.setItem('userToken', user === "client" ? clientAuthToken : partnerAuthToken);
 
@@ -213,11 +213,11 @@ const App = () => {
         <div>
           <h2>Mensagens via Subscription - Tempo Real</h2>
           {accumulatedData.map((chat, index) => (
-          <div key={index}>
-          <p>
-            <strong>{chat?.user.name}</strong>: {chat?.message}
-          </p>
-          </div>
+            <div key={index}>
+              <p>
+                <strong>{chat?.user.name}</strong>: {chat?.message}
+              </p>
+            </div>
           ))}
         </div>
       )}

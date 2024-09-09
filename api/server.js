@@ -3,12 +3,8 @@ import { createYoga } from 'graphql-yoga'
 import { schema } from './schema.js'
 import { useServer } from 'graphql-ws/lib/use/ws'
 import { WebSocketServer } from 'ws'
-import express from 'express';
 import { createPubSub } from '@graphql-yoga/subscription';
 
-
-// Create express instance
-const app = express();
 
 const pubSub = createPubSub();
 
@@ -39,11 +35,10 @@ const wss = new WebSocketServer({
 })
 
 // Integrate Yoga's Envelop instance and NodeJS server with graphql-ws
+// eslint-disable-next-line
 useServer(
   {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     execute: (args) => args.execute(args),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subscribe: (args) => args.subscribe(args),
     onSubscribe: async (ctx, msg) => {
       const { schema, execute, subscribe, contextFactory, parse, validate } = yoga.getEnveloped({
