@@ -38,7 +38,8 @@ const authLink = setContext((_, { headers }) => {
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: 'ws://clicklav.com.br/api/v1/graphql',
+    url: 'wss://clicklav.com.br/api/v1/graphql',
+    // url: 'ws://localhost:4000/api/v1/graphql',
   }),
 );
 
@@ -93,13 +94,19 @@ const SEND_MESSAGE_USER = gql`
 `;
 
 const CHAT_SUBSCRIPTION = gql`
-  subscription Chat($chatRoomId: ID!) {
+  subscription Chat($chatRoomId: String!) {
     messageSent(chatRoomId: $chatRoomId) {
       message
       user {
         name
       }
     }
+  }
+`;
+
+const COUNTDOWN_SUBSCRIPTION = gql`
+  subscription Countdown {
+    countdown(from: 10)
   }
 `;
 
@@ -132,10 +139,17 @@ const App = () => {
       shouldResubscribe: true,
       onData({ data }) {
         console.log(data)
-        setAccumulatedData((prev) => [...prev, data.sendMessage])
+        setAccumulatedData((prev) => [...prev, data.data.messageSent])
       }
     }
   );
+
+  const { data: countdownData } = useSubscription(COUNTDOWN_SUBSCRIPTION, {
+    shouldResubscribe: true,
+    onData({ data }) {
+      console.log(data)
+    }
+  });
 
   const handleSendMessage = async (user="client") => {
     // set userToken
@@ -166,6 +180,10 @@ const App = () => {
     }
   }, [clientAuthToken, partnerAuthToken]);
 
+  useEffect(() => {
+    console.log(accumulatedData)
+  }, [accumulatedData]);
+
   return (
     <div>
       <h1>Real-Time Chat</h1>
@@ -185,19 +203,19 @@ const App = () => {
           <h2>Chat Room - Mensagens Antigas</h2>
           {chatRoomData.chatRoom[0].chats.map((chat, index) => (
             <div key={index}>
-              <p><strong>{chat.user.name}</strong>: {chat.message}</p>
+              <p><strong>{chat?.user.name}</strong>: {chat.message}</p>
             </div>
           ))}
         </div>
       )}
 
-      {accumulatedData.length && (
+      {Boolean(accumulatedData.length) && (
         <div>
           <h2>Mensagens via Subscription - Tempo Real</h2>
           {accumulatedData.map((chat, index) => (
           <div key={index}>
           <p>
-            <strong>{chat.user.name}</strong>: {chat.message}
+            <strong>{chat?.user.name}</strong>: {chat?.message}
           </p>
           </div>
           ))}
